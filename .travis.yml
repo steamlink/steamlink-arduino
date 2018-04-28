@@ -9,7 +9,7 @@ before_install:
   - sudo ln -s /usr/local/share/arduino/arduino /usr/local/bin/arduino
 install:
   - ln -s $PWD /usr/local/share/arduino/libraries/steamlink-arduino
-  - mv $PWD/examples/SL_bridge0/SL_Credentials.h-sampl $PWD/examples/SL_bridge0/SL_Credentials.h
+  - mv $PWD/examples/SL_bridge0/SL_Credentials.h-sample $PWD/examples/SL_bridge0/SL_Credentials.h
   - arduino --install-library "Adafruit MQTT Library"  
   - arduino --pref "boardsmanager.additional.urls=https://adafruit.github.io/arduino-board-index/package_adafruit_index.json,http://arduino.esp8266.com/stable/package_esp8266com_index.json" --save-prefs
   - arduino --install-boards adafruit:samd
