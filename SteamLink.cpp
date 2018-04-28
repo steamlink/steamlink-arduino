@@ -106,4 +106,5 @@ void print_op_code(uint8_t op) {
 	if (op == SL_OP_MS) Serial.print("MS");
 	if (op == SL_OP_TR) Serial.print("TR");
 	if (op == SL_OP_SS) Serial.print("SS");
+	if (op == SL_OP_OF) Serial.print("OF");
 }

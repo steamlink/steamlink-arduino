@@ -93,15 +93,16 @@ Data packets look like:
 
 **NB** Data message op codes have an odd bottom bit
 
-| OP code       | Hex    | Type   |  Description                                                |
-| ------------- |-------:|:------:| :----------------------------------------------------------:|
-| `DS`          |    0x31| USER   | User packet to store, AN expected in return                 |
-| `BS`          |    0x33| ADMIN  | Bridge data to store                                        |
-| `ON`          |    0x35| ADMIN  | Node sign on packet                                         |
-| `AS`          |    0x37| ADMIN  | Node -> Store acknowledgement packet                        |
-| `MS`          |    0x39| USER   | Log message to store for user                               |
-| `TR`          |    0x3B| ADMIN  | Test packet received, payload = received test data          |
-| `SS`          |    0x3D| USER   | Sending status packet, payload = status message             |
+| OP code       | Hex    | Type   | Resp. from store | Payload            | Description                    |
+| ------------- |-------:|:------:| -----------------|--------------------|:------------------------------:|
+| `DS`          |    0x31| USER   | `AN`             | User payload       | User packet to store           |
+| `BS`          |    0x33| ADMIN  | none             | Encapsulated packet| Bridge data to store           |
+| `ON`          |    0x35| ADMIN  | `SC`             | Node config struct | Sign on packet                 |
+| `AS`          |    0x37| ADMIN  | none             | none               | Ack from node -> store         |
+| `MS`          |    0x39| USER   | none             | string             | Logging and messaging service  |
+| `TR`          |    0x3B| ADMIN  | none             | Received test data | Test packet seen               |
+| `SS`          |    0x3D| SHARED | none             | string             | Status service                 |
+| `OF`          |    0x3F| ADMIN  | none             | int time in secs   | Sign-off, do not disturb       |
 
 ### 2. `control`: store -> node
 
@@ -139,6 +140,18 @@ Control packets look like:
 | `BR`          |    0x3C| ADMIN  | Reset radio: acknowledge with AS message                    |
 | `AN`          |    0x3E| ADMIN  | Store -> Node acknowledgement packet                        |
 
+
+| OP code       | Hex    | Type   | Resp. from node  | Payload            | Description                    |
+| ------------- |-------:|:------:| -----------------|--------------------|:------------------------------:|
+| `DN`          |    0x30| USER   | `AS`             | User payload       | User packet from store         |
+| `BN`          |    0x32| ADMIN  | none             | Encapsulated packet| Bridge data from store         |
+| `GS`          |    0x34| ADMIN  | `SS`             | none               | Get status from node           |
+| `TD`          |    0x36| ADMIN  | none             | Test data to send  | Transmit test packet via radio |
+| `SC`          |    0x38| ADMIN  | `AS`             | Node config struct | Set new configuration          |
+| `BC`          |    0x3A| ADMIN  | none             | nonde              | Reboot node                    |
+| `BR`          |    0x3C| ADMIN  | `AS`             | Radio params       | Radio reset `[TBD]`            |
+| `AN`          |    0x3E| ADMIN  | none             | int time in secs   | Ack from store -> node         |
+
 ### Node Configuration
 
 The steamlink node structure looks like this:
@@ -152,7 +165,7 @@ struct SL_NodeCfgStruct {
     float gps_lat;
     float gps_lon;
     short altitude;
-    uint8_t max_silence; // in ms
+    uint8_t max_silence; // in seconds
     bool battery_powered;
     uint8_t radio_params; // radio params need to be interpreted by drivers
 };

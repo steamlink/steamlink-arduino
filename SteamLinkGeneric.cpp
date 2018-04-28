@@ -172,6 +172,12 @@ bool SteamLinkGeneric::send_on() {
 	return sent;
 }
 
+bool SteamLinkGeneric::send_off(int seconds) {
+	INFONL("SteamLinkGeneric::send_off packet: ");
+	bool sent = send_data(SL_OP_OF, seconds, sizeof(int));
+	return sent;
+}
+
 bool SteamLinkGeneric::send_as() {
 	INFONL("SteamLinkGeneric::send_as packet: ");
 	bool sent = send_data(SL_OP_AS, NULL, 0);

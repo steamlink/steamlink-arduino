@@ -30,6 +30,8 @@ class SteamLinkGeneric {
         virtual bool send_td(uint8_t *td, uint8_t len);
 
         virtual bool send_on();
+        
+        virtual bool send_off(int seconds);
 
         virtual bool send_as();
 
