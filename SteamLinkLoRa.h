@@ -32,20 +32,20 @@ MSB...........................LSB
 
 
 #pragma pack(push,1)
-struct SteamLinkLoraConfig {
+struct SteamLinkLoRaConfig {
   bool encrypted;
   uint8_t *key;
   uint8_t mod_conf;
 };
 #pragma pack(pop)
 
-class SteamLinkLora : public SteamLinkGeneric {
+class SteamLinkLoRa : public SteamLinkGeneric {
 
  public:
 
   // constructor
-//  SteamLinkLora(uint32_t slid);
-  SteamLinkLora(SL_NodeCfgStruct *config);
+//  SteamLinkLoRa(uint32_t slid);
+  SteamLinkLoRa(SL_NodeCfgStruct *config);
 
   virtual void init(void *conf, uint8_t config_length);
 
@@ -69,7 +69,7 @@ class SteamLinkLora : public SteamLinkGeneric {
  private:
 
   // config info
-  struct SteamLinkLoraConfig *_conf;
+  struct SteamLinkLoRaConfig *_conf;
   uint8_t *_key = NULL;
   uint8_t _encrypted = false;
   

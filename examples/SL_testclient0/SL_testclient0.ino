@@ -5,7 +5,7 @@
 #define MAX_MESSAGE_LEN 50
 
 #include <SteamLink.h>
-#include <SteamLinkLora.h>
+#include <SteamLinkLoRa.h>
 
 #define VER "7"
 
@@ -54,8 +54,8 @@ struct SL_NodeCfgStruct config = {
   1                   // radio_params
 };
 
-SteamLinkLora sl(&config);
-struct SteamLinkLoraConfig slconfig = { false, NULL, 0 };
+SteamLinkLoRa sl(&config);
+struct SteamLinkLoRaConfig slconfig = { false, NULL, 0 };
 
 /* Packet building */
 char  data[100];

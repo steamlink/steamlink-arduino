@@ -3,7 +3,7 @@
 // #define LORA_SEND_BLUE_LED 2
 //  #define LORA_RECEIVE_RED_LED 0
 
-SteamLinkLora::SteamLinkLora(SL_NodeCfgStruct *config) : SteamLinkGeneric(config) {
+SteamLinkLoRa::SteamLinkLoRa(SL_NodeCfgStruct *config) : SteamLinkGeneric(config) {
   // initialize _config, _slid  and set _node_addr
   _config = _config;
   _slid = _config->slid;
@@ -15,20 +15,20 @@ SteamLinkLora::SteamLinkLora(SL_NodeCfgStruct *config) : SteamLinkGeneric(config
 }
 
 
-bool SteamLinkLora::driver_can_send() {
+bool SteamLinkLoRa::driver_can_send() {
   return true; // wait max 0 us
 }
 
-void SteamLinkLora::init(void *vconf, uint8_t config_length) {
+void SteamLinkLoRa::init(void *vconf, uint8_t config_length) {
 
-  struct SteamLinkLoraConfig *_conf = (struct SteamLinkLoraConfig *) vconf;
+  struct SteamLinkLoRaConfig *_conf = (struct SteamLinkLoRaConfig *) vconf;
   _encrypted = _conf->encrypted;
   _key = _conf->key;
   _mod_conf = _conf->mod_conf;
 
-  if (config_length != sizeof(SteamLinkLoraConfig)) {
+  if (config_length != sizeof(SteamLinkLoRaConfig)) {
     FATAL("Received bad config struct, len should be: ");
-    FATAL(sizeof(SteamLinkLoraConfig));
+    FATAL(sizeof(SteamLinkLoRaConfig));
     FATAL(", is: ");
     FATALNL(config_length);
     while(1);
@@ -89,11 +89,11 @@ void SteamLinkLora::init(void *vconf, uint8_t config_length) {
   INFONL("LoRa driver ready to send!");
 }
 
-void SteamLinkLora::set_modem_config(uint8_t mod_conf) {
+void SteamLinkLoRa::set_modem_config(uint8_t mod_conf) {
   _mod_conf = mod_conf;
 }
 
-bool SteamLinkLora::update_modem_config() {
+bool SteamLinkLoRa::update_modem_config() {
   // Set modem configuration
   return true;
 /*
@@ -112,7 +112,7 @@ bool SteamLinkLora::update_modem_config() {
 */
 }
 
-bool SteamLinkLora::driver_receive(uint8_t* &packet, uint8_t &packet_size, uint32_t &slid) {
+bool SteamLinkLoRa::driver_receive(uint8_t* &packet, uint8_t &packet_size, uint32_t &slid) {
 
   uint8_t to;
   int packetSize = _driver->parsePacket();
@@ -120,7 +120,7 @@ bool SteamLinkLora::driver_receive(uint8_t* &packet, uint8_t &packet_size, uint3
   if (packetSize == 0) 
     return false;
     
-  INFO("SteamLinkLora::driver_receive len: ");
+  INFO("SteamLinkLoRa::driver_receive len: ");
   INFO(packetSize);
   INFO("\n");
 
@@ -140,7 +140,7 @@ bool SteamLinkLora::driver_receive(uint8_t* &packet, uint8_t &packet_size, uint3
     slid = header->slid;
   }
 
-  INFO("SteamLinkLora::driver_receive len: ");
+  INFO("SteamLinkLoRa::driver_receive len: ");
   INFO(rcvlen);
   INFO(" to: ");
   INFO(slid);
@@ -148,7 +148,7 @@ bool SteamLinkLora::driver_receive(uint8_t* &packet, uint8_t &packet_size, uint3
   INFOPHEX(driverbuffer, rcvlen);
   _last_rssi = _driver->packetRssi();
   packet = (uint8_t *) malloc(rcvlen);
-  INFO("SteamLinkLora::driver_receive: malloc "); Serial.println((unsigned int) packet, HEX);
+  INFO("SteamLinkLoRa::driver_receive: malloc "); Serial.println((unsigned int) packet, HEX);
   memcpy(packet,driverbuffer, rcvlen);
   packet_size = rcvlen;
 
@@ -165,14 +165,14 @@ bool SteamLinkLora::driver_receive(uint8_t* &packet, uint8_t &packet_size, uint3
 }
 
 
-bool SteamLinkLora::driver_send(uint8_t* packet, uint8_t packet_size, uint32_t slid) {
+bool SteamLinkLoRa::driver_send(uint8_t* packet, uint8_t packet_size, uint32_t slid) {
 
 #ifdef LORA_SEND_BLUE_LED
   pinMode(LORA_SEND_BLUE_LED, OUTPUT);
   digitalWrite(LORA_SEND_BLUE_LED, LOW);
 #endif //LORA_SEND_BLUE_LED
 
-  INFO("SteamLinkLora::driver_send len: ");
+  INFO("SteamLinkLoRa::driver_send len: ");
   INFO(packet_size);
   INFO(" to: ");
   INFO(slid);
@@ -185,19 +185,19 @@ bool SteamLinkLora::driver_send(uint8_t* packet, uint8_t packet_size, uint32_t s
 }
 
 // TODO: these are one-way functions
-uint8_t SteamLinkLora::get_node_from_slid(uint32_t slid) {
+uint8_t SteamLinkLoRa::get_node_from_slid(uint32_t slid) {
   // use 0xFF mask to get the last 8 bits
   return (uint8_t) (slid & 0xFF);
 }
 
 // TODO: these are one-way functions
-uint32_t SteamLinkLora::get_mesh_from_slid(uint32_t slid) {
+uint32_t SteamLinkLoRa::get_mesh_from_slid(uint32_t slid) {
   // drop the last 8 bits of slid
   return (uint32_t) (slid >> 8);
 }
 
 // pin defults re for Adafruit Feather M0 Lora
-void SteamLinkLora::set_pins(uint8_t cs=8, uint8_t reset=4, uint8_t interrupt=3) {
+void SteamLinkLoRa::set_pins(uint8_t cs=8, uint8_t reset=4, uint8_t interrupt=3) {
   _cs_pin = cs;
   _reset_pin = reset;
   _interrupt_pin = interrupt;

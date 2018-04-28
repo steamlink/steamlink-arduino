@@ -7,7 +7,7 @@
 
 #include <SteamLink.h>
 #include <SteamLinkESP.h>
-#include <SteamLinkLora.h>
+#include <SteamLinkLoRa.h>
 #include <SteamLinkBridge.h>
 
 #include "SL_Credentials.h"
@@ -62,7 +62,7 @@ void esp_on_receive(uint8_t* buffer, uint8_t size);
 void lora_on_receive(uint8_t* buffer, uint8_t size);
 
 SteamLinkESP slesp(&ESPconfig);
-SteamLinkLora sllora(&LoRaconfig);
+SteamLinkLoRa sllora(&LoRaconfig);
 SteamLinkBridge slbridge(&slesp);
 
 /* Packet building */
