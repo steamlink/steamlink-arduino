@@ -129,18 +129,6 @@ Control packets look like:
 
 **NB** Control message op codes have an even bottom bit
 
-| OP code       | Hex    | Type   |  Description                                                |
-| ------------- |-------:|:------:| :----------------------------------------------------------:|
-| `DN`          |    0x30| USER   | User packet to node                                         |
-| `BN`          |    0x32| ADMIN  | Bridge packet to node                                       |
-| `GS`          |    0x34| ADMIN  | Get status from node                                        |
-| `TD`          |    0x36| ADMIN  | Transmit a test packet via radio                            |
-| `SC`          |    0x38| ADMIN  | Set config is sent by store in response to the ON msg       |
-| `BC`          |    0x3A| ADMIN  | Boot cold: Restart node, no AS expected                     |
-| `BR`          |    0x3C| ADMIN  | Reset radio: acknowledge with AS message                    |
-| `AN`          |    0x3E| ADMIN  | Store -> Node acknowledgement packet                        |
-
-
 | OP code       | Hex    | Type   | Resp. from node  | Payload            | Description                    |
 | ------------- |-------:|:------:| -----------------|--------------------|:------------------------------:|
 | `DN`          |    0x30| USER   | `AS`             | User payload       | User packet from store         |
