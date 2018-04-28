@@ -1,0 +1,126 @@
+#!/bin/sh
+
+# script to compile arduino sketches and flash them w/o the IDE
+
+ARDUINO_APP="/Applications/Arduino.app"
+
+# defaults
+PORT="/dev/cu.usbserial-A400h9rO"
+SPEED=921600 
+BOARD="esp8266" 
+ABUILD=".abuild"
+
+
+SKETCH="$1"
+if [ "$SKETCH" = "" ]; then
+	echo "usage: abuild.sh sketch.ino [port [speed [board]]]"
+	exit 1
+fi
+
+if [ ! -r "$SKETCH" ]; then
+	echo "error: file $SKETCH not found"
+	exit 1
+fi
+
+BNAME=$(basename $SKETCH)
+BDIR=$(dirname $SKETCH)
+if [ "$BDIR" = "." ]; then
+	BDIR=$(pwd)
+fi
+
+if [ ! -d "$ARDUINO_APP" ]; then
+	echo "Ardhino IDE not found at $ARDUINO_APP"
+	exit 1
+fi
+ARDUINOBUILDER=$ARDUINO_APP/Contents/Java/arduino-builder
+if [ ! -x "$ARDUINOBUILDER" ]; then
+	echo "arduino-builder not found in $ARDUINO_APP"
+	exit 1
+fi
+
+if [ -r $ABUILD/.vars ]; then
+	 . $ABUILD/.vars
+fi
+
+if [ "$2" != "" ]; then
+	PORT="$2"
+fi
+
+if [ "$3" != "" ]; then
+	SPEED="$3"
+fi
+
+if [ "$4" != "" ]; then
+	BOARD="$4"
+fi
+
+if [ ! -r "$BDIR/$ABUILD/.json" ]; then
+	if [ "$BOARD" = "esp8266" ]; then
+		FQBN="esp8266:esp8266:huzzah:CpuFrequency=160,FlashSize=4M3M"	
+		FLASH="esptool"
+	elif  [ "$BOARD" = "adafruit_feather_m0" ]; then
+		FQBN="adafruit:samd:adafruit_feather_m0"
+		FLASH="bossac"
+	else
+		echo "error: board $BOARD not supported"
+		exit 2
+	fi
+	if [ "$FLASH" = "esptool" ]; then
+		if  [ "$FLASHTOOL" = "" ]; then
+			FLASHTOOL=$(which esptool.py)
+			if [ ! -x "$FLASHTOOL" ]; then
+				echo "error: esptool.py not found"
+				exit 2
+			fi
+		fi
+	elif [ "$FLASH" = "bossac" ]; then
+		if [ "$FLASHTOOL" = "" ]; then
+			FLASHTOOL=$(find $HOME/Library/Arduino15/packages  -name bossac -type f | xargs ls -rt | tail -1)
+			if [ ! -x "$FLASHTOOL" ]; then
+				echo "error: cannot find bossac"
+				exit 2
+			fi
+		fi
+	fi
+
+	if [ ! -d "$BDIR/$ABUILD" ]; then
+		mkdir "$BDIR/$ABUILD"
+	fi
+
+	echo "ARDUINO_APP=\"$ARDUINO_APP\"" >  $BDIR/$ABUILD/.vars
+	echo "PORT=\"$PORT\"" >>  $BDIR/$ABUILD/.vars
+	echo "SPEED=\"$SPEED\"" >>  $BDIR/$ABUILD/.vars
+	echo "BOARD=\"$BOARD\"" >>  $BDIR/$ABUILD/.vars
+	echo "SKETCH=\"$SKETCH\"" >>  $BDIR/$ABUILD/.vars
+	echo "FLASH=\"$FLASH\"" >>  $BDIR/$ABUILD/.vars
+	echo "FLASHTOOL=\"$FLASHTOOL\"" >>  $BDIR/$ABUILD/.vars
+	cat <<EOF >$BDIR/$ABUILD/.json   
+{
+  "builtInLibrariesFolders": "$ARDUINO_APP/Contents/Java/libraries",
+  "customBuildProperties": "",
+  "fqbn": "$FQBN",
+  "hardwareFolders": "$ARDUINO_APP/Contents/Java/hardware,$HOME/Library/Arduino15/packages",
+  "otherLibrariesFolders": "$ARDUINO_APP/Contents/Java/libraries,$HOME/Documents/Arduino/libraries",
+  "runtime.ide.version": "10600",
+  "toolsFolders": "$ARDUINO_APP/Contents/Java/tools-builder,$ARDUINO_APP/Contents/Java/hardware/tools/avr,$HOME/Library/Arduino15/packages"
+}
+EOF
+fi
+
+
+$ARDUINOBUILDER  -build-path $BDIR/$ABUILD  -compile -build-options-file $BDIR/$ABUILD/.json  $SKETCH
+if [ $? -ne 0 ]; then
+	echo "compile failed"
+	exit 1
+fi
+echo "flashing"
+
+if [ "$FLASH" = "esptool" ]; then
+  echo "put the ESP8266 in loader mode, hit <ENTER>"
+  read a
+  $FLASHTOOL --baud $SPEED --port $PORT write_flash  0x00000 $BDIR/$ABUILD/"$BNAME.bin"
+elif [ "$FLASH" = "bossac" ]; then
+  echo "double-click the RST button on the Feather M0 board, hit <ENTER>"
+  read a
+  $FLASHTOOL --port=$PORT -U true -i -e -w -v $BDIR/$ABUILD/"$BNAME.bin" -R
+fi
