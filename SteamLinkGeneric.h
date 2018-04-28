@@ -6,6 +6,9 @@
 
 #define SL_DEFAULT_STORE_ADDR 0x1
 #define SL_DEFAULT_TEST_ADDR  0xFFFFFFFF
+
+#define SL_MAX_PACKET_LENGTH 255
+
 #define SENDQSIZE 10
 
 class SteamLinkGeneric {
@@ -31,9 +34,9 @@ class SteamLinkGeneric {
 
         virtual bool send_on();
         
-        virtual bool send_off(int seconds);
+        virtual bool send_off(uint8_t seconds);
 
-        virtual bool send_as();
+        virtual bool send_as(uint8_t ack_code);
 
         virtual bool send_ms(char *msg);
 
@@ -78,6 +81,10 @@ class SteamLinkGeneric {
 
     protected:
 
+        bool is_transport(uint8_t op);
+        bool is_data(uint8_t op);
+        bool needs_ack(uint8_t op);
+   
         struct SL_NodeCfgStruct *_config;
         uint32_t _slid;
 
@@ -102,14 +109,15 @@ class SteamLinkGeneric {
         BridgeMode _bridge_mode = unbridged;
 
         bool sign_on_complete = false;
-        uint32_t  last_send_time = 0;
+        uint32_t  _last_send_time = 0;
 
         // Retry buffer
-        uint8_t* _retry_packet;
-        uint8_t _retry_packet_length;
+        uint8_t  _retry_packet[SL_MAX_PACKET_LENGTH];
+        uint8_t  _retry_packet_length;
         uint32_t _retry_slid;
+        uint32_t _last_retry_time = 0;
+        
         bool _waiting_for_ack = false;
-        bool _retry_buffer_full = true;
 
         SL_RingBuff sendQ;
 

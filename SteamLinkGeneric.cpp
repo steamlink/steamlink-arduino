@@ -1,6 +1,6 @@
 #include <SteamLinkGeneric.h>
 
-#define RETRY_TIME_MS 20000
+#define RETRY_TIME_MS 10000
 
 SteamLinkGeneric::SteamLinkGeneric(SL_NodeCfgStruct *config) : sendQ(SENDQSIZE) {
 	_config = config;
@@ -11,6 +11,7 @@ SteamLinkGeneric::SteamLinkGeneric(SL_NodeCfgStruct *config) : sendQ(SENDQSIZE) 
 	_pkt_count_control = 1;		// don't use pkt_count 0
 }
 
+// TODO: rename to driver_init?
 void SteamLinkGeneric::init(void *conf, uint8_t config_length) {
 }
 
@@ -24,7 +25,6 @@ void SteamLinkGeneric::update() {
 	if (!sign_on_complete) {
 		sign_on_procedure();
 		sign_on_complete = true;
-		last_send_time = millis();
 	}
 
 	// Handle receive on the PHY interface
@@ -37,7 +37,7 @@ void SteamLinkGeneric::update() {
 		if (slid != SL_DEFAULT_TEST_ADDR) {
 			INFO("SLID: "); INFO(_slid); INFONL("SteamLinkGeneric:: update():: Received pkt is not test pkt");
 			// Determine if we are data or control?
-			if ((packet[0] & 0x01) == 0x01) { // DATA
+			if (is_data(packet[0])) { // DATA
 			INFO("SLID: "); INFO(_slid); INFONL("SteamLinkGeneric:: update():: Received pkt is a `data` pkt intended for store");
 				if (_bridge_mode != unbridged) { // CAN BRIDGE
 					INFO("SLID: "); INFO(_slid); INFONL("SteamLinkGeneric:: update():: Node is bridged. Handling packet.");
@@ -45,6 +45,7 @@ void SteamLinkGeneric::update() {
 				} else { // CANNOT BRIDGE
 					WARN("SLID: "); WARN(_slid); WARNNL("SteamLinkGeneric:: update():: Node is unbridged. Dropping packet.");
 					INFOPKT(packet, packet_length);
+					free(packet); // Packet terminates. Must free.
 				}
 			} else { // CONTROL PACKETS
 				INFO("SLID: "); INFO(_slid); INFONL("SteamLinkGeneric:: update():: Received pkt is `control` pkt");
@@ -55,7 +56,8 @@ void SteamLinkGeneric::update() {
 				} else { // NOT MY PACKET
 					WARN("SLID: "); WARN(_slid); WARNNL("SteamLinkGeneric:: update():: Received control packet NOT addressed for this node.");
 					WARNNL("WARNING: DROPPING PACKET!");
-					INFOPKT(packet, packet_length);					
+					INFOPKT(packet, packet_length);
+					free(packet); // Packet terminates. Must free.
 				}
 			}
 		} else { // Tell the store we saw a test packet
@@ -64,53 +66,31 @@ void SteamLinkGeneric::update() {
 		}
 	}
 
-	// Send packets out the PHY if requried	
-	if (!_retry_buffer_full && sendQ.queuelevel()) { // IF empty retry buffer and nonzero queue
+	// Flush PHY queue
+	if (driver_can_send() && sendQ.queuelevel()) {
 		INFONL("SteamLinkGeneric::update: about to dequeue");
-		_retry_packet = sendQ.dequeue(&_retry_packet_length, &_retry_slid);
-
-		if (_retry_slid != SL_DEFAULT_TEST_ADDR) { // IF NOT TEST PACKET
-			if ((_retry_packet[0] & 0x1) == 1) { // IF DATA
-				((data_header*) _retry_packet)->pkg_num = _pkt_count_data++;
-				if (_pkt_count_data == 0) {
-					_pkt_count_data++;
-				}
-				uint8_t op = ((data_header*) _retry_packet)->op;
-				if ( op == SL_OP_DS || op == SL_OP_ON ) { // we expect AN for these op's
-					_waiting_for_ack = true;
-				}
-			} else { // IF CONTROL
-				((control_header*) _retry_packet)->pkg_num = _pkt_count_control++;
-				if (_pkt_count_control == 0) {
-					_pkt_count_control++;
-				}
-			} // IF CONTROL
-		} // IF NOT TEST
-
-		// We have gauranteed that the _retry packet is full
-		if (!driver_send(_retry_packet, _retry_packet_length, _retry_slid)) {
+		packet = sendQ.dequeue(&packet_length, &slid);
+		if (!driver_send(packet, packet_length, slid)) {
 			WARNNL("SteamLinkGeneric::update driver_send dropping packet!!");
-		}			
-		if (!_waiting_for_ack) {
-			free(_retry_packet); // packets should be free after ack if waiting
-		} else {
-			_retry_buffer_full = true;
 		}
-
-		last_send_time = millis(); // update last send time
-
-	} // IF empty retry buffer and nonzero queue
+		free(packet);
+	}
 
 	// Run Timer tasks
-	// Timer task 1: retry packet if we're waiting for ack
-	if ((millis() > (last_send_time + RETRY_TIME_MS) && _waiting_for_ack )  { 
-		if (!driver_send(_retry_packet, _retry_packet_length, _retry_slid)) {
-			WARNNL("SteamLinkGeneric::update driver_send dropping packet!!");
-		}			
-		last_send_time = millis(); // update last send time
+	// Timer task 1:
+	// 		If we're waiting for ack and it's time to retry
+	if (_waiting_for_ack && (millis() > (_last_retry_time + RETRY_TIME_MS)))  { 
+		packet_length = _retry_packet_length;
+		packet = (uint8_t*) malloc(packet_length); // should be free'd PHY side
+		slid = _retry_slid;
+		memcpy(packet, _retry_packet, packet_length);
+		_last_retry_time = millis(); // update last send time
+		generic_send(packet, packet_length,slid);
 	}
-	// Timer task 2: send a heartbeat if we have been silent for too long
-	if (millis() > (last_send_time + _config->max_silence*1000)) { // max_silence is in seconds
+
+	// Timer task 2: send a heartbeat if we have been silent for too long and we're not waiting for acks
+	if (millis() > (_last_send_time + _config->max_silence*1000)) { // max_silence is in seconds
+		INFONL("SteamLinkGeneric::update Sending heartbeat...");
 		send_ss("OK");
 	}
 }
@@ -144,22 +124,45 @@ bool SteamLinkGeneric::driver_receive(uint8_t* &packet, uint8_t &packet_size, ui
 	return false;
 }
 
+// returns true if send successful
 bool SteamLinkGeneric::send_data(uint8_t op, uint8_t* payload, uint8_t payload_length) {
+	if ( _waiting_for_ack && !is_transport(op))  { // Can only send TRANSPORT packets while waiting for ACK
+		WARNNL("SteamlinkGeneric::send_data Warning: cannot send ADMIN and USER packets while waiting for ACK");
+		return false;
+	}
 	uint8_t* packet;
 	uint8_t packet_length = payload_length + sizeof(data_header);
-	packet = (uint8_t*) malloc(packet_length);
-	INFO("SteamLinkGeneric::send_data malloc: "); Serial.println((unsigned int)packet, HEX);
-	data_header *header = (data_header *)packet;
-	header->op = op;
-	header->slid = _slid;
-	header->pkg_num = 0; // this will be filled in right before we send
-	header->rssi = _last_rssi;
-	if (payload_length > 0) {
-		memcpy(&packet[sizeof(data_header)], payload, payload_length);
+	if (packet_length > SL_MAX_PACKET_LENGTH) {
+		WARNNL("SteamlinkGeneric::send_data Warning: cannot send oversized data packet. Dropping");
+		return false; // send failed.
+	} else {
+		packet = (uint8_t*) malloc(packet_length);
+		INFO("SteamLinkGeneric::send_data malloc: "); Serial.println((unsigned int)packet, HEX);
+		data_header *header = (data_header *)packet;
+		header->op = op;
+		header->slid = _slid;
+		if (!is_transport(op)) {
+			header->pkg_num = _pkt_count_data++;
+			if (_pkt_count_data == 0) {
+				_pkt_count_data++;
+			}
+		}
+		header->rssi = _last_rssi;
+		if (payload_length > 0) {
+			memcpy(&packet[sizeof(data_header)], payload, payload_length);
+		}
+		// Cache packet in retry buffer if it needs to be ack'd
+		if (needs_ack(op)) { // Packet should be acked
+			_waiting_for_ack = true;
+			memcpy(_retry_packet, packet, packet_length);
+			_retry_packet_length = packet_length;
+			_retry_slid = SL_DEFAULT_STORE_ADDR;
+			_last_retry_time = millis();
+		} 
+		bool sent = generic_send(packet, packet_length, SL_DEFAULT_STORE_ADDR);
+		return sent;
 	}
-	bool sent = generic_send(packet, packet_length, SL_DEFAULT_STORE_ADDR);
-	return sent;
-}
+}	
 
 bool SteamLinkGeneric::send_td(uint8_t *td, uint8_t len) {
 	uint8_t* packet = (uint8_t *)malloc(len);
@@ -177,15 +180,15 @@ bool SteamLinkGeneric::send_on() {
 	return sent;
 }
 
-bool SteamLinkGeneric::send_off(int seconds) {
+bool SteamLinkGeneric::send_off(uint8_t seconds) {
 	INFONL("SteamLinkGeneric::send_off packet: ");
-	bool sent = send_data(SL_OP_OF, seconds, sizeof(int));
+	bool sent = send_data(SL_OP_OF, &seconds, sizeof(seconds));
 	return sent;
 }
 
-bool SteamLinkGeneric::send_as() {
+bool SteamLinkGeneric::send_as(uint8_t ack_code) {
 	INFONL("SteamLinkGeneric::send_as packet: ");
-	bool sent = send_data(SL_OP_AS, NULL, 0);
+	bool sent = send_data(SL_OP_AS, &ack_code, sizeof(ack_code));
 	return sent;
 }
 
@@ -243,7 +246,7 @@ void SteamLinkGeneric::handle_admin_packet(uint8_t* packet, uint8_t packet_lengt
 		// ------------------- */
 	} else if (op == SL_OP_TD) {
 		INFONL("Transmit Test Received");
-		send_as();
+		send_as(SL_ACK_SUCCESS);
 		uint8_t* payload = packet + sizeof(control_header);
 		uint8_t payload_length = packet_length - sizeof(control_header);
 		memcpy(packet, payload, payload_length);    // move payload to start of allc'd pkt
@@ -253,24 +256,40 @@ void SteamLinkGeneric::handle_admin_packet(uint8_t* packet, uint8_t packet_lengt
 		INFONL("Set Config Received");
 		if (_waiting_for_ack) {
 			_waiting_for_ack = false;
-			_retry_buffer_full = false;
-			free(_retry_packet);
 			uint8_t* payload = packet + sizeof(control_header);
 			uint8_t payload_length = packet_length - sizeof(control_header);
 			memcpy(packet, payload, payload_length);    // move payload to start of allc'd pkt
 			short vers = ((SL_NodeCfgStruct*) packet)->version;
 			if (vers == NODE_CONFIG_VERSION) {
-				INFONL("Passing payload as config to init");
-				init(packet, payload_length);
+				if ( payload_length != sizeof(SL_NodeCfgStruct)) {
+    				FATAL("FATAL: Received bad generic config struct. Should be:");
+					FATAL(sizeof(SL_NodeCfgStruct));
+    				FATAL(", is: ");
+    				FATALNL(payload_length);
+					send_as(SL_ACK_SIZE_ERR);
+  				} else {
+					// TODO: keep backup of config pointer in non volatile memory?
+					_config = (SL_NodeCfgStruct*) malloc(sizeof(SL_NodeCfgStruct));
+					memcpy(_config, packet, payload_length);
+					_slid = _config->slid;
+					
+					// TODO : Pass driver initialization config to init function
+					// TODO : INFONL("Passing payload as config to init");
+					// TODO : init(packet, payload_length);
+					send_as(SL_ACK_SUCCESS);
+				}
 			} else {
 				WARN("Warning: received packet with unknown version: "); WARNNL(vers);
+				send_as(SL_ACK_VERSION_ERR);
 			}
 		} else {
 			WARNNL("Warning: Unexpected Set Config. Did node send an ON msg?");
+			send_as(SL_ACK_UNEXPECTED);
 		}
-		send_as();
+		
 	} else if (op == SL_OP_BC) {
 		INFONL("BootCold Received");
+		free(packet);
 		while(1);    // watchdog will reset us
 
 	} else if (op == SL_OP_BR) {
@@ -282,11 +301,9 @@ void SteamLinkGeneric::handle_admin_packet(uint8_t* packet, uint8_t packet_lengt
 			WARNNL("Warning: Unexpected AN received");
 		}
 		_waiting_for_ack = false;
-		_retry_buffer_full = false;
-		free(_retry_packet);
 	}
 	else if ((op & 0x1) == 1) {     // we've received a DATA PACKET
-		send_data(SL_OP_BS, packet, packet_length);
+		send_data(SL_OP_BS, packet, packet_length); 
 	}
 }
 
@@ -305,11 +322,10 @@ uint32_t SteamLinkGeneric::get_slid() {
 bool SteamLinkGeneric::generic_send(uint8_t* packet, uint8_t packet_length, uint32_t slid) {
 	INFO("SLID: "); INFO(_slid); INFONL("SteamLinkGeneric:: generic_send():: send pkt via BRIDGE or PHY:");	
 	INFOPKT(packet, packet_length);
-	
-	bool is_data = ((packet[0] & 0x1) == 1); // data or control?
+
 	bool rc = true;
 
-	if ( is_data ) { // DATA
+	if ( is_data(packet[0]) ) { // DATA
 		if  (_bridge_mode == storeside ) {
 			INFO("SLID: "); INFO(_slid); INFONL("SteamLinkGeneric:: generic_send():: sending pkt via PHY");
 			rc = send_enqueue(packet, packet_length, slid);
@@ -333,8 +349,29 @@ bool SteamLinkGeneric::generic_send(uint8_t* packet, uint8_t packet_length, uint
 			_bridge_handler(packet, packet_length, slid);
 		}
 	}
+	
+	_last_send_time = millis();
+
 	if (!rc) {
 		WARNNL("SteamLinkGeneric::generic_send: send failed!!");
 	}
 	return rc;
+}
+
+bool SteamLinkGeneric::is_transport(uint8_t op) {
+	return (
+		( op == SL_OP_BS) ||
+		( op == SL_OP_TR)
+	);
+}
+
+bool SteamLinkGeneric::needs_ack(uint8_t op) {
+	return (
+		( op == SL_OP_DS) ||
+		( op == SL_OP_ON)
+	);
+}
+
+bool SteamLinkGeneric::is_data(uint8_t op) {
+		return ((op & 0x1) == 1); 
 }

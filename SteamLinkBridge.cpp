@@ -49,8 +49,10 @@ void SteamLinkBridge::router(uint8_t* packet, uint8_t packet_length, uint32_t sl
   } else if (slid == _nodeSideDriver->get_slid()) {
     _nodeSideDriver->handle_admin_packet(packet, packet_length);
   } else {
-    FATAL("SteamLinkBridge::router  unroutable slid:");
+    FATAL("SteamLinkBridge::router unroutable slid:");
     FATALNL(slid);
+    // This packet terminates here so we must free it.
+    free(packet);
   }
 }
 

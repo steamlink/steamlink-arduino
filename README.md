@@ -84,6 +84,7 @@ Any node that can communicate directly to MQTT can send its data messages to: `S
 
 
 Data packets look like:
+
 ```
 +----+------+---------+------+-----------+
 | op | slid | pkg_num | rssi | payload...|
@@ -93,16 +94,16 @@ Data packets look like:
 
 **NB** Data message op codes have an odd bottom bit
 
-| OP code       | Hex    | Type   | Resp. from store | Payload            | Description                    |
-| ------------- |-------:|:------:| -----------------|--------------------|:------------------------------:|
-| `DS`          |    0x31| USER   | `AN`             | User payload       | User packet to store           |
-| `BS`          |    0x33| ADMIN  | none             | Encapsulated packet| Bridge data to store           |
-| `ON`          |    0x35| ADMIN  | `SC`             | Node config struct | Sign on packet                 |
-| `AS`          |    0x37| ADMIN  | none             | 8 bit code         | Ack from node -> store         |
-| `MS`          |    0x39| USER   | none             | string             | Logging and messaging service  |
-| `TR`          |    0x3B| ADMIN  | none             | Received test data | Test packet seen               |
-| `SS`          |    0x3D| SHARED | none             | string             | Status service                 |
-| `OF`          |    0x3F| ADMIN  | none             | int time in secs   | Sign-off, do not disturb       |
+| OP code       | Hex    | Type      | Resp. from store | Payload            | Description                    |
+| ------------- |-------:|:---------:| -----------------|--------------------|:------------------------------:|
+| `DS`          |    0x31| USER      | `AN`             | User payload       | User packet to store           |
+| `BS`          |    0x33| TRANSPORT | none             | Encapsulated packet| Bridge data to store           |
+| `ON`          |    0x35| ADMIN     | `SC`             | Node config struct | Sign on packet                 |
+| `AS`          |    0x37| ADMIN     | none             | 8 bit code         | Ack from node -> store         |
+| `MS`          |    0x39| USER      | none             | string             | Logging and messaging service  |
+| `TR`          |    0x3B| TRANSPORT | none             | Received test data | Test packet seen               |
+| `SS`          |    0x3D| SHARED    | none             | string             | Status service                 |
+| `OF`          |    0x3F| ADMIN     | none             | int time in secs   | Sign-off, do not disturb       |
 
 ### 2. `control`: store -> node
 
@@ -120,6 +121,7 @@ Any node that can communicate directly to MQTT receives its control messages on:
 | `pkg_num`     |      16| Packet number/count set by the node creating the packet     |
 
 Control packets look like:
+
 ```
 +----+------+---------+-----------+
 | op | slid | pkg_num | payload...|
@@ -129,25 +131,32 @@ Control packets look like:
 
 **NB** Control message op codes have an even bottom bit
 
-| OP code       | Hex    | Type   | Resp. from node  | Payload            | Description                    |
-| ------------- |-------:|:------:| -----------------|--------------------|:------------------------------:|
-| `DN`          |    0x30| USER   | `AS`             | User payload       | User packet from store         |
-| `BN`          |    0x32| ADMIN  | none             | Encapsulated packet| Bridge data from store         |
-| `GS`          |    0x34| ADMIN  | `SS`             | none               | Get status from node           |
-| `TD`          |    0x36| ADMIN  | none             | Test data to send  | Transmit test packet via radio |
-| `SC`          |    0x38| ADMIN  | `AS`             | Node config struct | Set new configuration          |
-| `BC`          |    0x3A| ADMIN  | none             | none               | Reboot node                    |
-| `BR`          |    0x3C| ADMIN  | `AS`             | Radio params       | Radio reset `[TBD]`            |
-| `AN`          |    0x3E| ADMIN  | none             | 8 bit code         | Ack from store -> node         |
+| OP code       | Hex    | Type      | Resp. from node  | Payload            | Description                    |
+| ------------- |-------:|:---------:| -----------------|--------------------|:------------------------------:|
+| `DN`          |    0x30| USER      | `AS`             | User payload       | User packet from store         |
+| `BN`          |    0x32| TRANSPORT | none             | Encapsulated packet| Bridge data from store         |
+| `GS`          |    0x34| ADMIN     | `SS`             | none               | Get status from node           |
+| `TD`          |    0x36| ADMIN     | none             | Test data to send  | Transmit test packet via radio |
+| `SC`          |    0x38| ADMIN     | `AS`             | Node config struct | Set new configuration          |
+| `BC`          |    0x3A| ADMIN     | none             | none               | Reboot node                    |
+| `BR`          |    0x3C| ADMIN     | `AS`             | Radio params       | Radio reset `[TBD]`            |
+| `AN`          |    0x3E| ADMIN     | none             | 8 bit code         | Ack from store -> node         |
 
-
-### Acknowledgement Packet Codes
+### Acknowledgement Packet Codes for `AN` and `AS` Packets
 
 | Code      | `AN`                      | `AS`                      |
 |-----------|---------------------------|---------------------------|
 | 0x00      | Success                   | Success                   |
 | 0x01      | Supressed duplicate pkt   | Supressed duplicate pkt   |
 | 0x02      | Unexpected pkt, dropping  | Unexpected pkt, dropping  |
+| 0x03      | Bad version, dropping     | Bad version, dropiing     |
+| 0x04      | Unexpected size, dropping | Unexpected size, dropping |
+
+### `pkg_num`
+
+`pkg_num` is an inflight unique packet number for USER and ADMIN packet types. It is not used for TRANSPORT packets.
+
+## Nodes
 
 ### Node Configuration
 
@@ -167,3 +176,7 @@ struct SL_NodeCfgStruct {
     uint8_t radio_params; // radio params need to be interpreted by drivers
 };
 ```
+**TBD FEATURE** Driver confiuration for ESP and LoRa to be part of config struct that can be sent over the air using `SC` op-codes
+
+
+

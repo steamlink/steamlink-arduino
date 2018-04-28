@@ -29,7 +29,7 @@ void SteamLinkLora::init(void *vconf, uint8_t config_length) {
   if (config_length != sizeof(SteamLinkLoraConfig)) {
     FATAL("Received bad config struct, len should be: ");
     FATAL(sizeof(SteamLinkLoraConfig));
-    FATAL(" is: ");
+    FATAL(", is: ");
     FATALNL(config_length);
     while(1);
   }
@@ -55,7 +55,6 @@ void SteamLinkLora::init(void *vconf, uint8_t config_length) {
     _driver->setPins(_cs_pin, _reset_pin, _interrupt_pin);// set CS, reset, IRQ pin
 	  _driver->setFrequency(SL_LORA_DEFAULT_FREQUENCY * 1E6);
 	  _driver->setSpreadingFactor(7);
-	  _driver->enableCrc();
 	  _driver->setSignalBandwidth(125E3);
 	  _driver->setPreambleLength(8);
 	  _driver->setCodingRate4(5);

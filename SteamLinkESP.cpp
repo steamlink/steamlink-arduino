@@ -18,7 +18,10 @@ SteamLinkESP::SteamLinkESP(SL_NodeCfgStruct *config) : SteamLinkGeneric(config) 
 void SteamLinkESP::init(void *vconf, uint8_t config_length) {
 	INFO("Initializing SteamLinkESP\n");
 	if ( config_length != sizeof(SteamLinkESPConfig)) {
-    	FATAL("Received bad config struct");
+    	FATAL("Received bad config struct. Should be:");
+		FATAL(sizeof(SteamLinkESPConfig));
+    	FATAL(", is: ");
+    	FATALNL(config_length);
     	while(1);
   	}
   	_conf = (struct SteamLinkESPConfig *) vconf;

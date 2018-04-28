@@ -45,7 +45,14 @@ typedef void (*on_receive_bridge_handler_function)(uint8_t* packet, uint8_t pack
 #define SL_OP_MS 0x39  // log user message to store
 #define SL_OP_TR 0x3B  // Received Test Data
 #define SL_OP_SS 0x3D  // status info and counters
-#define SL_OP_ON 0x3F  // offline, payload = do not disturb in seconds
+#define SL_OP_OF 0x3F  // offline, payload = do not disturb in seconds
+
+// ACK CODES
+#define SL_ACK_SUCCESS     0x0
+#define SL_ACK_DUPLICATE   0x1
+#define SL_ACK_UNEXPECTED  0x2
+#define SL_ACK_VERSION_ERR 0x3
+#define SL_ACK_SIZE_ERR    0x4
 
 // DEBUG INSTRUCTIONS:
 //     Change below line or comment out to change the level of debugging
