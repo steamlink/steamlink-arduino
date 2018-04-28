@@ -31,7 +31,7 @@ struct SL_NodeCfgStruct ESPconfig = {
 struct SL_NodeCfgStruct LoRaconfig = {
   1,                  // version
 	SL_ID_LORA,              // slid
-	"LoRa_273",          // name
+	"LoRa_272",          // name
 	"LoRa Side of Bridge",     // description
 	43.43,              // gps_lat
 	-79.23,             // gps_lon
