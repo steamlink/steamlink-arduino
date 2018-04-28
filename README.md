@@ -98,7 +98,7 @@ Data packets look like:
 | `DS`          |    0x31| USER   | `AN`             | User payload       | User packet to store           |
 | `BS`          |    0x33| ADMIN  | none             | Encapsulated packet| Bridge data to store           |
 | `ON`          |    0x35| ADMIN  | `SC`             | Node config struct | Sign on packet                 |
-| `AS`          |    0x37| ADMIN  | none             | none               | Ack from node -> store         |
+| `AS`          |    0x37| ADMIN  | none             | 8 bit code         | Ack from node -> store         |
 | `MS`          |    0x39| USER   | none             | string             | Logging and messaging service  |
 | `TR`          |    0x3B| ADMIN  | none             | Received test data | Test packet seen               |
 | `SS`          |    0x3D| SHARED | none             | string             | Status service                 |
@@ -136,9 +136,18 @@ Control packets look like:
 | `GS`          |    0x34| ADMIN  | `SS`             | none               | Get status from node           |
 | `TD`          |    0x36| ADMIN  | none             | Test data to send  | Transmit test packet via radio |
 | `SC`          |    0x38| ADMIN  | `AS`             | Node config struct | Set new configuration          |
-| `BC`          |    0x3A| ADMIN  | none             | nonde              | Reboot node                    |
+| `BC`          |    0x3A| ADMIN  | none             | none               | Reboot node                    |
 | `BR`          |    0x3C| ADMIN  | `AS`             | Radio params       | Radio reset `[TBD]`            |
-| `AN`          |    0x3E| ADMIN  | none             | int time in secs   | Ack from store -> node         |
+| `AN`          |    0x3E| ADMIN  | none             | 8 bit code         | Ack from store -> node         |
+
+
+### Acknowledgement Packet Codes
+
+| Code      | `AN`                      | `AS`                      |
+|-----------|---------------------------|---------------------------|
+| 0x00      | Success                   | Success                   |
+| 0x01      | Supressed duplicate pkt   | Supressed duplicate pkt   |
+| 0x02      | Unexpected pkt, dropping  | Unexpected pkt, dropping  |
 
 ### Node Configuration
 

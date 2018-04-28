@@ -1,6 +1,6 @@
 #include <SteamLinkGeneric.h>
 
-#define RETRY_TIME_DIVIDER 4
+#define RETRY_TIME_MS 20000
 
 SteamLinkGeneric::SteamLinkGeneric(SL_NodeCfgStruct *config) : sendQ(SENDQSIZE) {
 	_config = config;
@@ -20,17 +20,18 @@ bool SteamLinkGeneric::send(uint8_t* buf) {
 
 void SteamLinkGeneric::update() {
 	
-	// Sign on
+	// Ensure that we are signed on
 	if (!sign_on_complete) {
 		sign_on_procedure();
 		sign_on_complete = true;
 		last_send_time = millis();
 	}
+
+	// Handle receive on the PHY interface
 	uint8_t* packet;
 	uint8_t packet_length;
 	uint32_t slid;
 	bool received = driver_receive(packet, packet_length, slid);
-	
 	if (received) { // RECEIVED NEW PACKET ON THE PHY
 		INFO("SLID: "); INFO(_slid); INFONL("SteamLinkGeneric:: update():: Received pkt");
 		if (slid != SL_DEFAULT_TEST_ADDR) {
@@ -62,7 +63,8 @@ void SteamLinkGeneric::update() {
 			send_tr(packet, packet_length);
 		}
 	}
-		
+
+	// Send packets out the PHY if requried	
 	if (!_retry_buffer_full && sendQ.queuelevel()) { // IF empty retry buffer and nonzero queue
 		INFONL("SteamLinkGeneric::update: about to dequeue");
 		_retry_packet = sendQ.dequeue(&_retry_packet_length, &_retry_slid);
@@ -89,22 +91,25 @@ void SteamLinkGeneric::update() {
 		if (!driver_send(_retry_packet, _retry_packet_length, _retry_slid)) {
 			WARNNL("SteamLinkGeneric::update driver_send dropping packet!!");
 		}			
-		
 		if (!_waiting_for_ack) {
 			free(_retry_packet); // packets should be free after ack if waiting
 		} else {
 			_retry_buffer_full = true;
 		}
+
+		last_send_time = millis(); // update last send time
+
 	} // IF empty retry buffer and nonzero queue
 
-	// TIMERS
-	if ((millis() > (last_send_time + _config->max_silence*1000/RETRY_TIME_DIVIDER)) && _waiting_for_ack )  { // max_silence is in seconds))
+	// Run Timer tasks
+	// Timer task 1: retry packet if we're waiting for ack
+	if ((millis() > (last_send_time + RETRY_TIME_MS) && _waiting_for_ack )  { 
 		if (!driver_send(_retry_packet, _retry_packet_length, _retry_slid)) {
 			WARNNL("SteamLinkGeneric::update driver_send dropping packet!!");
 		}			
-		
+		last_send_time = millis(); // update last send time
 	}
-	// send a heartbeat if we have been silent for too long
+	// Timer task 2: send a heartbeat if we have been silent for too long
 	if (millis() > (last_send_time + _config->max_silence*1000)) { // max_silence is in seconds
 		send_ss("OK");
 	}
@@ -263,6 +268,7 @@ void SteamLinkGeneric::handle_admin_packet(uint8_t* packet, uint8_t packet_lengt
 		} else {
 			WARNNL("Warning: Unexpected Set Config. Did node send an ON msg?");
 		}
+		send_as();
 	} else if (op == SL_OP_BC) {
 		INFONL("BootCold Received");
 		while(1);    // watchdog will reset us
