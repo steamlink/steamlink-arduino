@@ -45,6 +45,7 @@ void SteamLinkGeneric::update() {
 				} else { // CANNOT BRIDGE
 					WARN("SLID: "); WARN(_slid); WARNNL("SteamLinkGeneric:: update():: Node is unbridged. Dropping packet.");
 					INFOPKT(packet, packet_length);
+					INFO("free packet: "); Serial.println((unsigned int)packet, HEX);
 					free(packet); // Packet terminates. Must free.
 				}
 			} else { // CONTROL PACKETS
@@ -57,6 +58,7 @@ void SteamLinkGeneric::update() {
 					WARN("SLID: "); WARN(_slid); WARNNL("SteamLinkGeneric:: update():: Received control packet NOT addressed for this node.");
 					WARNNL("WARNING: DROPPING PACKET!");
 					INFOPKT(packet, packet_length);
+					INFO("free packet: "); Serial.println((unsigned int)packet, HEX);
 					free(packet); // Packet terminates. Must free.
 				}
 			}
@@ -160,6 +162,12 @@ bool SteamLinkGeneric::send_data(uint8_t op, uint8_t* payload, uint8_t payload_l
 			_last_retry_time = millis();
 		} 
 		bool sent = generic_send(packet, packet_length, SL_DEFAULT_STORE_ADDR);
+
+		if (is_transport(op)) {
+			INFO("free transport payload: "); Serial.println((unsigned int)payload, HEX);
+			free(payload);
+		}
+
 		return sent;
 	}
 }	
@@ -286,9 +294,11 @@ void SteamLinkGeneric::handle_admin_packet(uint8_t* packet, uint8_t packet_lengt
 			WARNNL("Warning: Unexpected Set Config. Did node send an ON msg?");
 			send_as(SL_ACK_UNEXPECTED);
 		}
-		
+		INFO("free packet: "); Serial.println((unsigned int)packet, HEX);
+		free(packet);
 	} else if (op == SL_OP_BC) {
 		INFONL("BootCold Received");
+		INFO("free packet: "); Serial.println((unsigned int)packet, HEX);
 		free(packet);
 		while(1);    // watchdog will reset us
 

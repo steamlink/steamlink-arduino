@@ -52,6 +52,7 @@ void SteamLinkBridge::router(uint8_t* packet, uint8_t packet_length, uint32_t sl
     FATAL("SteamLinkBridge::router unroutable slid:");
     FATALNL(slid);
     // This packet terminates here so we must free it.
+    INFO("free packet: "); Serial.println((unsigned int)packet, HEX);
     free(packet);
   }
 }
