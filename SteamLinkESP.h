@@ -19,7 +19,7 @@
 #include <SteamLink.h>
 
 #define SL_ESP_DEFAULT_TOPIC_LEN 100
-#define SL_ESP_MAX_MESSAGE_LEN 200
+#define SL_ESP_MAX_MESSAGE_LEN 255
 
 
 #define WIFI_WAITSECONDS 15

@@ -227,6 +227,7 @@ void SteamLinkGeneric::handle_admin_packet(uint8_t* packet, uint8_t packet_lengt
 		uint8_t* payload = packet + sizeof(control_header);
 		uint8_t payload_length = packet_length - sizeof(control_header);
 		memcpy(packet, payload, payload_length);    // move payload to start of allc'd pkt
+		send_as(SL_ACK_SUCCESS);	// N.B. kludge:  need to find out why this works
 		send_as(SL_ACK_SUCCESS);
 		if (_on_receive != NULL) {
 			_on_receive(packet, payload_length);
