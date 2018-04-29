@@ -1,4 +1,6 @@
-# SteamLink
+# SteamLink 
+
+[![Build Status](https://api.travis-ci.org/steamlink/steamlink-arduino.svg?branch=master)](https://travis-ci.org/steamlink/steamlink-arduino)
 
 This document includes a high-level summary of project goals, protocol, and implementation.
 
