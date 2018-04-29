@@ -16,7 +16,7 @@ install:
   - arduino --install-boards esp8266:esp8266
 
 script:  
-  - arduino --verify --board adafruit:samd:feather_m0 $PWD/examples/SL_testclient0/SL_testclient0.ino
+  - arduino --verify --board adafruit:samd:adafruit_feather_m0 $PWD/examples/SL_testclient0/SL_testclient0.ino
   
 notifications:
   email:
