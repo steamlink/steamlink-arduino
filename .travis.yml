@@ -15,8 +15,8 @@ install:
   - arduino --install-boards adafruit:samd
   - arduino --install-boards esp8266:esp8266
 
-script:
-  - arduino --verify --board esp8266:esp8266:huzzah $PWD/examples/SL_bridge0/SL_bridge0.ino
+script:  
+  - arduino --verify --board adafruit:samd:feather_m0 $PWD/examples/SL_testclient0/SL_testclient0.ino
   
 notifications:
   email:
