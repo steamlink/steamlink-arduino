@@ -305,11 +305,15 @@ void SteamLinkGeneric::handle_admin_packet(uint8_t* packet, uint8_t packet_lengt
 	} else if (op == SL_OP_BR) {
 		INFONL("BootReset Received");
 		// TODO: actually reset the radio
+		INFO("free packet: "); Serial.println((unsigned int)packet, HEX);
+		free(packet);
 	} else if (op == SL_OP_AN) {
 		INFONL("AN Received");
 		if (!_waiting_for_ack) {
 			WARNNL("Warning: Unexpected AN received");
 		}
+		INFO("free packet: "); Serial.println((unsigned int)packet, HEX);
+		free(packet);
 		_waiting_for_ack = false;
 	}
 	else if ((op & 0x1) == 1) {     // we've received a DATA PACKET
