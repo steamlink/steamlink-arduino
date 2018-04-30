@@ -1,6 +1,6 @@
 #include <SteamLinkGeneric.h>
 
-#define RETRY_TIME_MS 10000
+#define RETRY_TIME_MS 3000
 
 SteamLinkGeneric::SteamLinkGeneric(SL_NodeCfgStruct *config) : sendQ(SENDQSIZE) {
 	_config = config;
