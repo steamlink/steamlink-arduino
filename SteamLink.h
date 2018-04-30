@@ -27,6 +27,13 @@ typedef void (*on_receive_bridge_handler_function)(uint8_t* packet, uint8_t pack
 #define  MIN(a,b) (((a)<(b))?(a):(b))
 #define  MAX(a,b) (((a)>(b))?(a):(b))
 
+// N.B. for now we restrict the range of valid SLIDs.
+#define SL_SLID_MIN 0x100
+#define SL_SLID_MAX 0x10ff
+
+#define SL_OP_MIN 0x30
+#define SL_OP_MAX 0x3F
+
 // admin_control message types: EVEN, 0 bottom bit
 #define SL_OP_DN 0x30  // data to node, repy with AS if qos
 #define SL_OP_BN 0x32  // BN

@@ -33,6 +33,21 @@ void SteamLinkGeneric::update() {
 	uint32_t slid;
 	bool received = driver_receive(packet, packet_length, slid);
 	if (received) { // RECEIVED NEW PACKET ON THE PHY
+		// sanity check packet
+		char *problem = NULL;
+		if ((packet[0] < SL_OP_MIN) || (packet[0] > SL_OP_MAX)) {
+			problem = "bad OP"; 
+		}
+		else if (slid != 0 && ((slid < SL_SLID_MIN) || (slid > SL_SLID_MAX))) {
+			problem = "bad slid";
+		}
+		if (problem) {
+			// TODO: count 
+			INFO("SLID: "); INFO(_slid); INFO("SteamLinkGeneric:: DROPPED PKT ");
+			INFONL(problem);
+			free(packet);
+			return;
+		}
 		INFO("SLID: "); INFO(_slid); INFONL("SteamLinkGeneric:: update():: Received pkt");
 		if (slid != SL_DEFAULT_TEST_ADDR) {
 			INFO("SLID: "); INFO(_slid); INFONL("SteamLinkGeneric:: update():: Received pkt is not test pkt");
@@ -286,6 +301,7 @@ void SteamLinkGeneric::handle_admin_packet(uint8_t* packet, uint8_t packet_lengt
 					// TODO : Pass driver initialization config to init function
 					// TODO : INFONL("Passing payload as config to init");
 					// TODO : init(packet, payload_length);
+					send_as(SL_ACK_SUCCESS);	// N.B. kludge: need to find out why this works
 					send_as(SL_ACK_SUCCESS);
 				}
 			} else {
