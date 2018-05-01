@@ -177,7 +177,7 @@ bool SteamLinkLoRa::driver_send(uint8_t* packet, uint8_t packet_size, uint32_t s
   INFO(" to: ");
   INFO(slid);
   INFONL(" packet: ");
-  _driver->beginPacket();
+  _driver->beginPacket(false);
   _driver->write(packet, packet_size);
   _driver->endPacket();
   INFOPHEX(packet, packet_size);
