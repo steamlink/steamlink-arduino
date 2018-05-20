@@ -16,16 +16,26 @@ void phex(uint8_t *data, unsigned int length) {
     	}
     	ih += 1;
     	if ((i % 16) == 15) {
+			#ifndef UNIX
         	Serial.print(hbuf);
         	Serial.println(sbuf);
+			#else
+			std::cout<<hbuf;
+        	std::cout<<sbuf<<std::endl;
+			#endif
         	ih = 0;
     	}
   	}
   	if (ih > 0) {
     	sbuf[ih] = '\0';
     	hbuf[ih*3] = '\0';
-    	Serial.print(hbuf);
-    	Serial.println(sbuf);
+		#ifndef UNIX
+			Serial.print(hbuf);
+			Serial.println(sbuf);
+		#else
+			std::cout<<hbuf;
+			std::cout<<sbuf<<std::endl;
+		#endif
   	}
 }
 
@@ -37,74 +47,81 @@ void print_packet(uint8_t* packet, uint8_t packet_length) {
 		uint16_t pkg_num = ((data_header*) packet)->pkg_num;
 		uint8_t rssi = ((data_header*) packet)->rssi;
 		
-		Serial.println(" ");
-		Serial.println("|-----------------------------------|");
-		Serial.println("|         START OF PACKET           |");
-		Serial.println("|-----------------------------------|");
-		Serial.println("|           DATA HEADER             |");
-		Serial.println("|-----------------------------------|");
-		Serial.print  ("| OP      : "); Serial.print(op, HEX); Serial.print(" <-> "); print_op_code(op); Serial.println(" ");
-		Serial.print  ("| SLID    : "); Serial.print(slid); Serial.print(" <-> HEX: "); Serial.println(slid, HEX);
-		Serial.print  ("| PKG NUM : "); Serial.println(pkg_num);
-		Serial.print  ("| RSSI    : "); Serial.println(rssi);
-		Serial.println("|-----------------------------------|");
+		INFONL(" ");
+		INFONL("|-----------------------------------|");
+		INFONL("|         START OF PACKET           |");
+		INFONL("|-----------------------------------|");
+		INFONL("|           DATA HEADER             |");
+		INFONL("|-----------------------------------|");
+		INFO  ("| OP      : "); INFOHEX(op); INFO(" <-> "); print_op_code(op); INFONL(" ");
+		INFO  ("| SLID    : "); INFO(slid); INFO(" <-> HEX: "); INFOHEX(slid); INFONL(" ");
+		INFO  ("| PKG NUM : "); INFONL(pkg_num);
+		INFO  ("| RSSI    : "); INFONL(rssi);
+		INFONL("|-----------------------------------|");
 		#if DEBUG_PACKET_VERBOSE
 		uint8_t* payload = packet + sizeof(data_header);
 		uint8_t payload_length = packet_length - sizeof(data_header);
-		Serial.println("|           DATA PAYLOAD            |");
-		Serial.println("|-----------------------------------|");
+		INFONL("|           DATA PAYLOAD            |");
+		INFONL"|-----------------------------------|");
 		phex(payload, payload_length);
-		Serial.println("|-----------------------------------|");
+		INFONL"|-----------------------------------|");
 		#endif
-		Serial.println("|           END OF PACKET           |");
-		Serial.println("|-----------------------------------|");
-		Serial.println(" ");
+		INFONL("|           END OF PACKET           |");
+		INFONL("|-----------------------------------|");
+		INFONL(" ");
 
 	} else {
 		uint8_t op = ((control_header*) packet)->op;
 		uint32_t slid = ((control_header*) packet)->slid;
 		uint16_t pkg_num = ((control_header*) packet)->pkg_num;
 
-		Serial.println(" ");
-		Serial.println("|-----------------------------------|");
-		Serial.println("|         START OF PACKET           |");
-		Serial.println("|-----------------------------------|");
-		Serial.println("|         CONTROL HEADER            |");
-		Serial.println("|-----------------------------------|");
-		Serial.print  ("| OP      : "); Serial.print(op, HEX); Serial.print(" <-> "); print_op_code(op); Serial.println(" ");
-		Serial.print  ("| SLID    : "); Serial.print(slid); Serial.print(" <-> HEX: "); Serial.println(slid, HEX);
-		Serial.print  ("| PKG NUM : "); Serial.println(pkg_num);
-		Serial.println("|-----------------------------------|");
+		INFONL(" ");
+		INFONL("|-----------------------------------|");
+		INFONL("|         START OF PACKET           |");
+		INFONL("|-----------------------------------|");
+		INFONL("|         CONTROL HEADER            |");
+		INFONL("|-----------------------------------|");
+		INFO  ("| OP      : "); INFOHEX(op); INFO(" <-> "); print_op_code(op); INFONL(" ");
+		INFO  ("| SLID    : "); INFO(slid); INFO(" <-> HEX: "); INFOHEX(slid); INFONL(" ");
+		INFO  ("| PKG NUM : "); INFONL(pkg_num);
+		INFONL("|-----------------------------------|");
 		#if DEBUG_PACKET_VERBOSE
 		uint8_t* payload = packet + sizeof(control_header);
 		uint8_t payload_length = packet_length - sizeof(control_header);
-		Serial.println("|          CONTROL PAYLOAD          |");
-		Serial.println("|-----------------------------------|");
+		INFONL("|          CONTROL PAYLOAD          |");
+		INFONL("|-----------------------------------|");
 		phex(payload, payload_length);
-		Serial.println("|-----------------------------------|");
+		INFONL("|-----------------------------------|");
 		#endif
-		Serial.println("|           END OF PACKET           |");
-		Serial.println("|-----------------------------------|");
-		Serial.println(" ");
+		INFONL("|           END OF PACKET           |");
+		INFONL("|-----------------------------------|");
+		INFONL(" ");
 	}
 }
 
 void print_op_code(uint8_t op) {
-	if (op == SL_OP_DN) Serial.print("DN");
-	if (op == SL_OP_BN) Serial.print("BN");
-	if (op == SL_OP_GS) Serial.print("GS");
-	if (op == SL_OP_TD) Serial.print("TD");
-	if (op == SL_OP_SC) Serial.print("SC");	
-	if (op == SL_OP_BC) Serial.print("BC");
-	if (op == SL_OP_BR) Serial.print("BR");
-	if (op == SL_OP_AN) Serial.print("AN");
+	if (op == SL_OP_DN) INFO("DN");
+	if (op == SL_OP_BN) INFO("BN");
+	if (op == SL_OP_GS) INFO("GS");
+	if (op == SL_OP_TD) INFO("TD");
+	if (op == SL_OP_SC) INFO("SC");	
+	if (op == SL_OP_BC) INFO("BC");
+	if (op == SL_OP_BR) INFO("BR");
+	if (op == SL_OP_AN) INFO("AN");
 
-	if (op == SL_OP_DS) Serial.print("DS");
-	if (op == SL_OP_BS) Serial.print("BS");
-	if (op == SL_OP_ON) Serial.print("ON");
-	if (op == SL_OP_AS) Serial.print("AS");
-	if (op == SL_OP_MS) Serial.print("MS");
-	if (op == SL_OP_TR) Serial.print("TR");
-	if (op == SL_OP_SS) Serial.print("SS");
-	if (op == SL_OP_OF) Serial.print("OF");
+	if (op == SL_OP_DS) INFO("DS");
+	if (op == SL_OP_BS) INFO("BS");
+	if (op == SL_OP_ON) INFO("ON");
+	if (op == SL_OP_AS) INFO("AS");
+	if (op == SL_OP_MS) INFO("MS");
+	if (op == SL_OP_TR) INFO("TR");
+	if (op == SL_OP_SS) INFO("SS");
+	if (op == SL_OP_OF) INFO("OF");
 }
+
+#ifdef UNIX
+unsigned long millis() {
+	return 0;
+}
+
+#endif

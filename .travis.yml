@@ -10,6 +10,7 @@ before_install:
 install:
   - ln -s $PWD /usr/local/share/arduino/libraries/steamlink-arduino
   - mv $PWD/examples/SL_bridge0/SL_Credentials.h-sample $PWD/examples/SL_bridge0/SL_Credentials.h
+  - mv $PWD/examples/SL_pahoclient0/SL_Credentials.h-sample $PWD/examples/SL_pahoclient0/SL_Credentials.h
   - arduino --install-library "Adafruit MQTT Library"  
   - arduino --pref "boardsmanager.additional.urls=https://adafruit.github.io/arduino-board-index/package_adafruit_index.json,http://arduino.esp8266.com/stable/package_esp8266com_index.json" --save-prefs
   - arduino --install-boards adafruit:samd
@@ -17,6 +18,7 @@ install:
 
 script:  
   - arduino --verify --board adafruit:samd:adafruit_feather_m0 $PWD/examples/SL_testclient0/SL_testclient0.ino
+  - cd $PWD/examples/SL_pahoclient0 && make build
   
 notifications:
   email:

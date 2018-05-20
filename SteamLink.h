@@ -1,7 +1,15 @@
 #ifndef STEAMLINK_H
 #define STEAMLINK_H
 
-#include <Arduino.h>
+#ifndef UNIX
+  #include <Arduino.h>
+#else
+  #include <iostream>
+  #include <chrono>
+  #include <string.h>
+  #include <memory.h>
+  #include <stdint.h>
+#endif
 
 #define NODE_CONFIG_VERSION 1
 
@@ -76,10 +84,19 @@ typedef void (*on_receive_bridge_handler_function)(uint8_t* packet, uint8_t pack
 #define DEBUG_LEVEL_NONE   0
 
 #if DEBUG_ENABLED >= DEBUG_LEVEL_INFO
- #define INFONL(text) Serial.println(text)
- #define INFO(text) Serial.print(text)
- #define INFOPHEX(data, len) phex(data, len)
- #define INFOPKT(packet, packet_length) print_packet(packet, packet_length)
+  #ifndef UNIX
+    #define INFONL(text) Serial.println(text)
+    #define INFO(text) Serial.print(text)
+    #define INFOHEX(text) Serial.print((unsigned int) text, HEX)
+    #define INFOPHEX(data, len) phex(data, len)
+    #define INFOPKT(packet, packet_length) print_packet(packet, packet_length)
+  #else
+    #define INFONL(text) std::cout<<text<<std::endl
+    #define INFO(text) std::cout<<text
+    #define INFOHEX(text)  std::cout << std::hex << text
+    #define INFOPHEX(data, len) phex(data, len)
+    #define INFOPKT(packet, packet_length) print_packet(packet, packet_length)
+  #endif
 #else 
  #define INFONL(text) ((void)0)
  #define INFO(text) ((void)0)
@@ -88,9 +105,15 @@ typedef void (*on_receive_bridge_handler_function)(uint8_t* packet, uint8_t pack
 #endif
 
 #if DEBUG_ENABLED >= DEBUG_LEVEL_WARN
- #define WARNNL(text) Serial.println(text)
- #define WARN(text) Serial.print(text)
- #define WARNPHEX(data, len) phex(data, len)
+  #ifndef UNIX
+    #define WARNNL(text) Serial.println(text)
+    #define WARN(text) Serial.print(text)
+    #define WARNPHEX(data, len) phex(data, len)
+  #else
+    #define WARNNL(text) std::cout<<text<<std::endl
+    #define WARN(text) std::cout<<text
+    #define WARNPHEX(data, len) phex(data, len)
+  #endif
 #else 
  #define WARNNL(text) ((void)0)
  #define WARN(text) ((void)0)
@@ -98,9 +121,15 @@ typedef void (*on_receive_bridge_handler_function)(uint8_t* packet, uint8_t pack
 #endif
 
 #if DEBUG_ENABLED >= DEBUG_LEVEL_ERR
- #define ERRNL(text) Serial.println(text)
- #define ERR(text) Serial.print(text)
- #define ERRPHEX(data, len) phex(data, len)
+  #ifndef UNIX
+    #define ERRNL(text) Serial.println(text)
+    #define ERR(text) Serial.print(text)
+    #define ERRPHEX(data, len) phex(data, len)
+  #else
+    #define ERRNL(text) std::cout<<text<<std::endl
+    #define ERR(text) std::cout<<text
+    #define ERRPHEX(data, len) phex(data, len)
+  #endif
 #else 
  #define ERRNL(text) ((void)0)
  #define ERR(text) ((void)0)
@@ -108,9 +137,15 @@ typedef void (*on_receive_bridge_handler_function)(uint8_t* packet, uint8_t pack
 #endif
 
 #if DEBUG_ENABLED >= DEBUG_LEVEL_FATAL
- #define FATALNL(text) Serial.println(text)
- #define FATAL(text) Serial.print(text)
- #define FATALPHEX(data, len) phex(data, len)
+  #ifndef UNIX
+    #define FATALNL(text) Serial.println(text)
+    #define FATAL(text) Serial.print(text)
+    #define FATALPHEX(data, len) phex(data, len)
+  #else
+    #define FATALNL(text) std::cout<<text<<std::endl
+    #define FATAL(text) std::cout<<text
+    #define FATALPHEX(data, len) phex(data, len)
+  #endif
 #else 
  #define FATALNL(text) ((void)0)
  #define FATAL(text) ((void)0)
@@ -147,4 +182,8 @@ void print_op_code(uint8_t op);
 
 enum BridgeMode { unbridged, storeside, nodeside };
 
+#ifdef UNIX
+  unsigned long millis();
 #endif
+
+#endif // STEAMLINK_H

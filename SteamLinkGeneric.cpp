@@ -60,7 +60,7 @@ void SteamLinkGeneric::update() {
 				} else { // CANNOT BRIDGE
 					WARN("SLID: "); WARN(_slid); WARNNL("SteamLinkGeneric:: update():: Node is unbridged. Dropping packet.");
 					INFOPKT(packet, packet_length);
-					INFO("free packet: "); Serial.println((unsigned int)packet, HEX);
+					INFO("free packet: "); INFOHEX( packet);
 					free(packet); // Packet terminates. Must free.
 				}
 			} else { // CONTROL PACKETS
@@ -73,7 +73,7 @@ void SteamLinkGeneric::update() {
 					WARN("SLID: "); WARN(_slid); WARNNL("SteamLinkGeneric:: update():: Received control packet NOT addressed for this node.");
 					WARNNL("WARNING: DROPPING PACKET!");
 					INFOPKT(packet, packet_length);
-					INFO("free packet: "); Serial.println((unsigned int)packet, HEX);
+					INFO("free packet: "); INFOHEX( packet);
 					free(packet); // Packet terminates. Must free.
 				}
 			}
@@ -154,7 +154,7 @@ bool SteamLinkGeneric::send_data(uint8_t op, uint8_t* payload, uint8_t payload_l
 		return false; // send failed.
 	} else {
 		packet = (uint8_t*) malloc(packet_length);
-		INFO("SteamLinkGeneric::send_data malloc: "); Serial.println((unsigned int)packet, HEX);
+		INFO("SteamLinkGeneric::send_data malloc: "); INFOHEX( packet);
 		data_header *header = (data_header *)packet;
 		header->op = op;
 		header->slid = _slid;
@@ -179,7 +179,7 @@ bool SteamLinkGeneric::send_data(uint8_t op, uint8_t* payload, uint8_t payload_l
 		bool sent = generic_send(packet, packet_length, SL_DEFAULT_STORE_ADDR);
 
 		if (is_transport(op)) {
-			INFO("free transport payload: "); Serial.println((unsigned int)payload, HEX);
+			INFO("free transport payload: "); INFOHEX( packet);
 			free(payload);
 		}
 
@@ -189,7 +189,7 @@ bool SteamLinkGeneric::send_data(uint8_t op, uint8_t* payload, uint8_t payload_l
 
 bool SteamLinkGeneric::send_td(uint8_t *td, uint8_t len) {
 	uint8_t* packet = (uint8_t *)malloc(len);
-	INFO("SteamLinkGeneric::send_td malloc: "); Serial.println((unsigned int)packet, HEX);
+	INFO("SteamLinkGeneric::send_td malloc: "); INFOHEX( packet);
 	memcpy(packet, td, len);
 	uint8_t packet_length;
 	INFONL("SteamLinkGeneric::send_td packet");
@@ -312,25 +312,25 @@ void SteamLinkGeneric::handle_admin_packet(uint8_t* packet, uint8_t packet_lengt
 			WARNNL("Warning: Unexpected Set Config. Did node send an ON msg?");
 			send_as(SL_ACK_UNEXPECTED);
 		}
-		INFO("free packet: "); Serial.println((unsigned int)packet, HEX);
+		INFO("free packet: "); INFOHEX( packet);
 		free(packet);
 	} else if (op == SL_OP_BC) {
 		INFONL("BootCold Received");
-		INFO("free packet: "); Serial.println((unsigned int)packet, HEX);
+		INFO("free packet: "); INFOHEX( packet);
 		free(packet);
 		while(1);    // watchdog will reset us
 
 	} else if (op == SL_OP_BR) {
 		INFONL("BootReset Received");
 		// TODO: actually reset the radio
-		INFO("free packet: "); Serial.println((unsigned int)packet, HEX);
+		INFO("free packet: "); INFOHEX( packet);
 		free(packet);
 	} else if (op == SL_OP_AN) {
 		INFONL("AN Received");
 		if (!_waiting_for_ack) {
 			WARNNL("Warning: Unexpected AN received");
 		}
-		INFO("free packet: "); Serial.println((unsigned int)packet, HEX);
+		INFO("free packet: "); INFOHEX( packet);
 		free(packet);
 		_waiting_for_ack = false;
 	}
