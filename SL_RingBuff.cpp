@@ -1,4 +1,7 @@
-#include <malloc.h>
+#ifndef UNIX
+  #include <malloc.h>
+#endif
+
 #include "SL_RingBuff.h"
 
 // create a ring with 'size' elements
@@ -11,8 +14,8 @@ SL_RingBuff::SL_RingBuff(int size) {
 // Put something into the buffer. Returns 0 when the buffer was full,
 // 1 when the stuff was put sucessfully into the buffer
 int SL_RingBuff::enqueue (uint8_t *val, uint8_t len, uint32_t addr) {
-  Serial.print("enqueue len: ");
-  Serial.println(len);
+  INFO("enqueue len: ");
+  INFO(len);
   int newtail = (_tail + 1) % _ringsize;
   if (newtail == _head) {
     // Buffer is full, do nothing

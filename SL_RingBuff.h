@@ -1,8 +1,7 @@
 #ifndef SL_RINGBUF_H
 #define SL_RINGBUF_H
 // Simple queue/ringbuffer class
-
-#include<Arduino.h>
+#include <SteamLink.h>
 #include <stdint.h>
 
 typedef struct relement {
