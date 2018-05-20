@@ -9,12 +9,12 @@
 #include "SL_Credentials.h"
 #include <ctime>
 
-#define SL_ID_PAHO 0x157
+#define SL_ID_PAHO 0x158
 
 struct SL_NodeCfgStruct Pahoconfig = {
     1,                  // version
 	SL_ID_PAHO,              // slid
-	"PahoNode",          // name
+	"PahoMac",          // name
 	"Running on Mac",     // description
 	43.43,              // gps_lat
 	-79.23,             // gps_lon
