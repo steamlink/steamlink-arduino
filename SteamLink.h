@@ -6,6 +6,9 @@
 #else
   #include <iostream>
   #include <chrono>
+  #include <string.h>
+  #include <memory.h>
+  #include <stdint.h>
 #endif
 
 #define NODE_CONFIG_VERSION 1

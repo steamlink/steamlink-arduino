@@ -35,7 +35,7 @@ void SteamLinkPaho::init(void *vconf, uint8_t config_length) {
     if (rc != 0)
 	    printf("rc from TCP connect is %d\n", rc);
 
-    _data.MQTTVersion = 3;
+    _data.MQTTVersion = 4;
     _data.clientID.cstring = (char*) _conf->sl_conid;
 
     INFONL("MQTT connecting");
