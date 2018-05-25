@@ -143,7 +143,7 @@ bool SteamLinkGeneric::driver_receive(uint8_t* &packet, uint8_t &packet_size, ui
 
 // returns true if send successful
 bool SteamLinkGeneric::send_data(uint8_t op, uint8_t* payload, uint8_t payload_length) {
-	if ( _waiting_for_ack && !is_transport(op))  { // Can only send TRANSPORT packets while waiting for ACK
+	if ( _waiting_for_ack && !is_transport(op) && (op != SL_OP_AS))  { // Can only send TRANSPORT packets while waiting for ACK
 		WARNNL("SteamlinkGeneric::send_data Warning: cannot send ADMIN and USER packets while waiting for ACK");
 		return false;
 	}
@@ -235,14 +235,14 @@ bool SteamLinkGeneric::send_ss(char* status) {
 
 void SteamLinkGeneric::handle_admin_packet(uint8_t* packet, uint8_t packet_length) {
 	INFO("SLID: "); INFO(_slid); INFONL("SteamLinkGeneric:: handle_admin_packet():: Handling packet:");
-	INFOPKT(packet, packet_length);
+	WARNPKT(packet, packet_length);
 	uint8_t op = packet[0];
 	if (op == SL_OP_DN) {          // CONTROL PACKETS
 		INFONL("DN Packet Received");
 		uint8_t* payload = packet + sizeof(control_header);
 		uint8_t payload_length = packet_length - sizeof(control_header);
 		memcpy(packet, payload, payload_length);    // move payload to start of allc'd pkt
-		send_as(SL_ACK_SUCCESS);	// N.B. kludge:  need to find out why this works
+		delay(70);		// kludge: needed to make quick receive/send turnaround work
 		send_as(SL_ACK_SUCCESS);
 		if (_on_receive != NULL) {
 			_on_receive(packet, payload_length);
@@ -353,7 +353,7 @@ uint32_t SteamLinkGeneric::get_slid() {
 
 bool SteamLinkGeneric::generic_send(uint8_t* packet, uint8_t packet_length, uint32_t slid) {
 	INFO("SLID: "); INFO(_slid); INFONL("SteamLinkGeneric:: generic_send():: send pkt via BRIDGE or PHY:");	
-	INFOPKT(packet, packet_length);
+	WARNPKT(packet, packet_length);
 
 	bool rc = true;
 

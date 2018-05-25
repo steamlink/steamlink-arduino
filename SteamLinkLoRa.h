@@ -86,6 +86,7 @@ class SteamLinkLoRa : public SteamLinkGeneric {
   uint8_t _cs_pin;
   uint8_t _reset_pin;
   uint8_t _interrupt_pin;
+  int _implicit_mode = 1;
 
   // modem_config
   uint8_t _mod_conf = 0;
