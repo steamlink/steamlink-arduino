@@ -142,7 +142,7 @@ Control packets look like:
 | `SC`          |    0x38| ADMIN     | `AS`             | msgpk {`cfg`}      | Set cfg                        |
 | `BO`          |    0x3A| ADMIN     | none             | msgpk {bool `cold`}| Reboot node                    |
 | `MN`          |    0x3C| ADMIN     | `AS`             | msgpk {string `mt`}| Message to node                |
-| `AN`          |    0x3E| ADMIN     | none             | msgpk {`code`, `pkg_num`}| Ack from store -> node         |
+| `AN`          |    0x3E| ADMIN     | none             | msgpk {`code`, `pkg_num`}| Ack from store -> node   |
 
 ### Acknowledgement Packet Codes for `AN` and `AS` Packets
 
@@ -184,11 +184,11 @@ struct SL_NodeCfgStruct {
 ```
 **TBD FEATURE** Driver confiuration for ESP and LoRa to be part of config struct that can be sent over the air using `SC` op-codes
 
-## Config Sequence
+## Configuration Sequence
 
 ### On Boot (node side)
 1. Power on
-2. Retrieve config local config from registers
+2. Retrieve local config from registers
 3. Send `RC`
 4. Wait for `SC`
 5. Store config retrieved from `SC` payload to local registers
@@ -201,10 +201,10 @@ struct SL_NodeCfgStruct {
 3. Wait for `AS`
 **NB** The store needs to send a `BO` for node to activate reconfig. This is to allow multi-stage / multi-node reconfigurations.
 
+[SM]: https://github.com/steamlink/steamlink-arduino/raw/master/StateMachines.png "Node State Machine"
 
 ## WiFi Bridge Configuration
 
-Webserver
-
+Bridge nodes that support WiFi start up with an AP and host a webserver for reconfiguration of that bridge. See the [WiFiManager library](https://github.com/tzapu/WiFiManager) for more details.
 
 
