@@ -100,12 +100,12 @@ Data packets look like:
 | ------------- |-------:|:---------:| -----------------|--------------------|:------------------------------:|
 | `DS`          |    0x31| USER      | `AN`             | User payload       | User packet to store           |
 | `BS`          |    0x33| TRANSPORT | none             | Encapsulated packet| Bridge data to store           |
-| `ON`          |    0x35| ADMIN     | `SC`             | Node config struct | Sign on packet                 |
-| `AS`          |    0x37| ADMIN     | none             | 8 bit code         | Ack from node -> store         |
-| `MS`          |    0x39| USER      | none             | string             | Logging and messaging service  |
+| `RC`          |    0x35| ADMIN     | `SC`             | msgpk {`config`, bool `cold`}| Rpt cfg              |
+| `AS`          |    0x37| ADMIN     | none             | {`code`, `pkg_num`}| Ack from node -> store         |
+| `MS`          |    0x39| USER      | `AN`             | msgpk {`mt`}       | Logging and messaging service  |
 | `TR`          |    0x3B| TRANSPORT | none             | Received test data | Test packet seen               |
-| `SS`          |    0x3D| SHARED    | none             | string             | Status service                 |
-| `OF`          |    0x3F| ADMIN     | none             | int time in secs   | Sign-off, do not disturb       |
+| `SS`          |    0x3D| SHARED    | none             | msgpk {`sl_status`, `user_status`, array `counters`} | Status |
+| `OF`          |    0x3F| ADMIN     | none             | msgpk, {`sleep_duration`} | Sign-off, do not disturb |
 
 ### 2. `control`: store -> node
 
@@ -139,10 +139,10 @@ Control packets look like:
 | `BN`          |    0x32| TRANSPORT | none             | Encapsulated packet| Bridge data from store         |
 | `GS`          |    0x34| ADMIN     | `SS`             | none               | Get status from node           |
 | `TD`          |    0x36| ADMIN     | none             | Test data to send  | Transmit test packet via radio |
-| `SC`          |    0x38| ADMIN     | `AS`             | Node config struct | Set new configuration          |
-| `BC`          |    0x3A| ADMIN     | none             | none               | Reboot node                    |
-| `BR`          |    0x3C| ADMIN     | `AS`             | Radio params       | Radio reset `[TBD]`            |
-| `AN`          |    0x3E| ADMIN     | none             | 8 bit code         | Ack from store -> node         |
+| `SC`          |    0x38| ADMIN     | `AS`             | msgpk {`cfg`}      | Set cfg                        |
+| `BO`          |    0x3A| ADMIN     | none             | msgpk {bool `cold`}| Reboot node                    |
+| `MN`          |    0x3C| ADMIN     | `AS`             | msgpk {string `mt`}| Message to node                |
+| `AN`          |    0x3E| ADMIN     | none             | msgpk {`code`, `pkg_num`}| Ack from store -> node         |
 
 ### Acknowledgement Packet Codes for `AN` and `AS` Packets
 
@@ -157,6 +157,10 @@ Control packets look like:
 ### `pkg_num`
 
 `pkg_num` is an inflight unique packet number for USER and ADMIN packet types. It is not used for TRANSPORT packets.
+
+### `msgpack` fields
+
+SteamLink uses [message pack](https://msgpack.org/index.html) for payloads for some messages.
 
 ## Nodes
 
@@ -179,6 +183,28 @@ struct SL_NodeCfgStruct {
 };
 ```
 **TBD FEATURE** Driver confiuration for ESP and LoRa to be part of config struct that can be sent over the air using `SC` op-codes
+
+## Config Sequence
+
+### On Boot (node side)
+1. Power on
+2. Retrieve config local config from registers
+3. Send `RC`
+4. Wait for `SC`
+5. Store config retrieved from `SC` payload to local registers
+6. Send `AS`
+7. Intialize and run
+
+### On Web Reconfig (store side)
+1. User inputs config and clicks `save`
+2. Send `SC` to node
+3. Wait for `AS`
+**NB** The store needs to send a `BO` for node to activate reconfig. This is to allow multi-stage / multi-node reconfigurations.
+
+
+## WiFi Bridge Configuration
+
+Webserver
 
 
 
