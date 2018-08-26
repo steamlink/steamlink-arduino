@@ -73,7 +73,8 @@ typedef void (*on_receive_bridge_handler_function)(uint8_t* packet, uint8_t pack
 //     Change below line or comment out to change the level of debugging
 //     Make sure Serial is defined if DEBUG is enabled
 //     Debugger uses Serial.println() to debug
-#define DEBUG_ENABLED DEBUG_LEVEL_INFO
+//#define DEBUG_ENABLED DEBUG_LEVEL_INFO
+#define DEBUG_ENABLED DEBUG_LEVEL_WARN
 
 #define DEBUG_PACKET_VERBOSE 0
 
@@ -100,6 +101,7 @@ typedef void (*on_receive_bridge_handler_function)(uint8_t* packet, uint8_t pack
 #else 
  #define INFONL(text) ((void)0)
  #define INFO(text) ((void)0)
+ #define INFOHEX(text) ((void)0)
  #define INFOPHEX(data, len) ((void)0)
  #define INFOPKT(packet, packet_length) ((void)0)
 #endif
@@ -108,16 +110,21 @@ typedef void (*on_receive_bridge_handler_function)(uint8_t* packet, uint8_t pack
   #ifndef UNIX
     #define WARNNL(text) Serial.println(text)
     #define WARN(text) Serial.print(text)
+    #define WARNHEX(text) Serial.print((unsigned int) text, HEX)
     #define WARNPHEX(data, len) phex(data, len)
+    #define WARNPKT(packet, packet_length) print_packet(packet, packet_length)
   #else
     #define WARNNL(text) std::cout<<text<<std::endl
     #define WARN(text) std::cout<<text
+    #define WARNHEX(text)  std::cout << std::hex << text
     #define WARNPHEX(data, len) phex(data, len)
+    #define WARNPKT(packet, packet_length) print_packet(packet, packet_length)
   #endif
 #else 
  #define WARNNL(text) ((void)0)
  #define WARN(text) ((void)0)
  #define WARNPHEX(data, len) ((void)0)
+ #define WARNPKT(packet, packet_length) ((void)0)
 #endif
 
 #if DEBUG_ENABLED >= DEBUG_LEVEL_ERR

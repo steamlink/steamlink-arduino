@@ -53,8 +53,8 @@ void print_packet(uint8_t* packet, uint8_t packet_length) {
 		INFONL("|-----------------------------------|");
 		INFONL("|           DATA HEADER             |");
 		INFONL("|-----------------------------------|");
-		INFO  ("| OP      : "); INFOHEX(op); INFO(" <-> "); print_op_code(op); INFONL(" ");
-		INFO  ("| SLID    : "); INFO(slid); INFO(" <-> HEX: "); INFOHEX(slid); INFONL(" ");
+		WARN  ("| OP      : "); WARNHEX(op); INFO(" <-> "); print_op_code(op); WARNNL(" ");
+		WARN  ("| SLID    : "); WARN(slid); WARN(" <-> HEX: "); WARNHEX(slid); WARNNL(" ");
 		INFO  ("| PKG NUM : "); INFONL(pkg_num);
 		INFO  ("| RSSI    : "); INFONL(rssi);
 		INFONL("|-----------------------------------|");
