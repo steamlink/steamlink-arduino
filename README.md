@@ -199,9 +199,9 @@ struct SL_NodeCfgStruct {
 1. User inputs config and clicks `save`
 2. Send `SC` to node
 3. Wait for `AS`
-**NB** The store needs to send a `BO` for node to activate reconfig. This is to allow multi-stage / multi-node reconfigurations.
 
-[SM]: https://github.com/steamlink/steamlink-arduino/raw/master/StateMachines.png "Node State Machine"
+**NB** The store needs to send a `BO` for node to activate reconfig. This is to allow multi-stage / multi-node reconfigurations.
+![Node State machine](https://raw.githubusercontent.com/steamlink/steamlink-arduino/master/StateMachines.png)
 
 ## WiFi Bridge Configuration
 
